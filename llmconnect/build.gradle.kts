@@ -40,15 +40,18 @@ dependencies {
 
 }
 
-val gitVersion: String by lazy {
-    runCatching {
-        val proc = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
-            .redirectErrorStream(true)
-            .start()
-        val out = proc.inputStream.bufferedReader().use { it.readText() }.trim()
-        if (proc.waitFor() == 0) out.removePrefix("v") else throw RuntimeException("git failed")
-    }.getOrDefault("1.0.0")
-}
+val gitVersion = providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0")
+    isIgnoreExitValue = true
+}.standardOutput
+    .asText
+    .map { output ->
+        output.trim()
+            .removePrefix("v")
+            .ifBlank { "1.0.0" }
+    }
+    .orElse("1.0.0")
+
 
 
 publishing {
@@ -56,7 +59,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.github.devdiaries41.llmconnect-android"
             artifactId = project.name
-            version = gitVersion
+            version = gitVersion.get()
 
             afterEvaluate {
                 from(components["release"])
