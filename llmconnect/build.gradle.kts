@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    kotlin("plugin.serialization") version "2.0.21"
     id("maven-publish")
 }
 
